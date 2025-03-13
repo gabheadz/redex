@@ -9,7 +9,9 @@ defmodule Redex.Command do
       "PING" -> {:simple_str, "PONG"}
       "ECHO" -> {:simple_str, Enum.at(args, 0)}
       "SET" -> set(args)
+      "SETEX" -> setex(args)
       "GET" -> get(Enum.at(args, 0))
+      "DEL" -> del(args)
       _ -> raise @invalid_command_message
     end
   end
@@ -35,8 +37,23 @@ defmodule Redex.Command do
     {:simple_str, "OK"}
   end
 
+  def setex(args) do
+    case args do
+      [key, value] ->
+        Redex.KV.set(key, %{value: value})
+      [key, delta_str, value] ->
+        {delta, _} = Integer.parse(delta_str)
+        now = Time.utc_now()
+        expires = Time.add(now, delta, :millisecond)
+        Redex.KV.set(key, %{value: value, expires: expires})
+      _ -> raise @invalid_command_message
+    end
+    {:simple_str, "OK"}
+  end
+
   def get(key) do
-    value = case Redex.KV.get(key) do
+    value = case Redex.KV.get(key) |> IO.inspect() do
+      nil -> nil
       %{value: val, expires: expiry} ->
         now = Time.utc_now()
         if Time.compare(expiry, now) == :gt do
@@ -48,5 +65,10 @@ defmodule Redex.Command do
     end
     {:bulk_str, value}
   end
-end
 
+  def del([key]) do
+    Redex.KV.delete(key)
+    {:simple_str, "OK"}
+  end
+
+end

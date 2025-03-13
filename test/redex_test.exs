@@ -50,6 +50,9 @@ defmodule RedexServerTest do
   test "set and get", %{conn: conn} do
     assert Redix.command!(conn, ["SET", "mykey", "somevalue"]) == "OK"
     assert Redix.command!(conn, ["GET", "mykey"]) == "somevalue"
+
+    assert Redix.command!(conn, ["SETEX", "myotherkey", 10_000, "somevalue2"]) == "OK"
+    assert Redix.command!(conn, ["GET", "myotherkey"]) == "somevalue2"
   end
 
   test "set and get when expiry in seconds", %{conn: conn} do
@@ -64,6 +67,15 @@ defmodule RedexServerTest do
     assert Redix.command!(conn, ["SET", "mykey", "somevalue", "px", "10"]) == "OK"
     assert Redix.command!(conn, ["GET", "mykey"]) == "somevalue"
     :timer.sleep(10)
+    assert Redix.command!(conn, ["GET", "mykey"]) == nil
+  end
+
+  test "set, get, delete", %{conn: conn} do
+    assert Redix.command!(conn, ["SET", "mykey", "somevalue"]) == "OK"
+    assert Redix.command!(conn, ["GET", "mykey"]) == "somevalue"
+
+    assert Redix.command!(conn, ["DEL", "mykey"]) == "OK"
+
     assert Redix.command!(conn, ["GET", "mykey"]) == nil
   end
 end

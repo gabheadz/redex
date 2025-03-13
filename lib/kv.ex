@@ -18,4 +18,8 @@ defmodule Redex.KV do
   def set(key, value) do
     Agent.update(__MODULE__, &(Map.put(&1, key, value)))
   end
+
+  def delete(key) do
+    Agent.update(__MODULE__, &(Map.delete(&1, key)))
+  end
 end
